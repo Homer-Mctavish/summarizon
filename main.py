@@ -1,24 +1,11 @@
 import sys
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog
-from PyQt5.uic import loadUi
 
-class MainWindow(QDialog):
-    def __init__(self):
-        super(MainWindow,self).__init__()
-        loadUi("summarizon.ui",self)
-        self.browse.clicked.connect(self.browsefiles)
+from base import context
+from gui import MainWindow
 
-    def browsefiles(self):
-        fname=QFileDialog.getOpenFileName(self, 'Open file', '', 'PDFs (.pdf file)')
-        self.filename.setText(fname[0])
-
-if __name__ == '__main__':
-    app=QApplication(sys.argv)
-    mainwindow=MainWindow()
-    widget=QtWidgets.QStackedWidget()
-    widget.addWidget(mainwindow)
-    widget.setFixedWidth(400)
-    widget.setFixedHeight(300)
-    widget.show()
-    sys.exit(app.exec_())
+if __name__ == "__main__":
+    window = MainWindow()
+    window.resize(250, 150)
+    window.show()
+    exit_code = context.app.exec_()
+    sys.exit(exit_code)
