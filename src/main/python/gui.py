@@ -3,7 +3,7 @@ from PyQt5 import uic
 
 from base import context
 
-from logic import openFile, textExtract, summary
+from logic import openFile, textExtract, summary, kill
 from PyQt5.QtWidgets import (
     QWidget, QApplication, QProgressBar, QMainWindow,
     QHBoxLayout, QPushButton
@@ -53,19 +53,21 @@ class JobRunner(QRunnable):
 class MainWindow(QMainWindow):
     def __init__(self):
         self.summarizeList = None
-        self.runstatus = True
+        self.is_paused = False
+        self.is_killed = False
         super().__init__()
         # Loading the .ui file from the resources
         #self.threadpool = Worker()
         self.ui = uic.loadUi(context.get_resource("summarizon.ui"), self)
 
         # Binding the button to the print_data function defined in logic.py
+
         self.getFileButton.clicked.connect(lambda: openFile(self))
         #self.startSummarizing.clicked.connect(print_data())
         self.extractText.clicked.connect(lambda: textExtract(self))
         self.startSummarizing.clicked.connect(lambda: summary(self))
-        self.pauseSummarizing.clicked.connect(lambda: self.runner.pause)
-        self.stopSummarizing.clicked.connect(lambda: self.runner.kill)
-        self.resumeSummarizing.clicked.connect(lambda: self.runner.resume)
-        
+        # self.pauseSummarizing.clicked.connect(lambda: Job.pause)
+        self.stopSummarizing.clicked.connect(lambda: kill(self))
+        # self.resumeSummarizing.clicked.connect(lambda: Job.resume)
+
         

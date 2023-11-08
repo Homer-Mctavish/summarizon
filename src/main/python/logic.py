@@ -1,18 +1,15 @@
 from base import context
 from PyQt5 import QtWidgets
-from datasets import load_dataset
-from transformers import AutoTokenizer
-from transformers import DataCollatorForSeq2Seq
+from PyPDF2 import PdfReader
+from transformers import pipeline
 import evaluate
 import numpy as np
-from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer
-from transformers import pipeline
-from PyPDF2 import PdfReader
 import nltk
+from threading import *
+from nltk.tokenize import sent_tokenize
+import re
 
-
-billsum = load_dataset("billsum", split="ca_test")
-
+summarizer = pipeline("summarization")
 
 def openFile(window):
     fileName, _ = QtWidgets.QFileDialog.getOpenFileName(window, 'Open File', ' ', 'All Files (*);;Text Files (*.txt)')
@@ -29,87 +26,74 @@ def textExtract(window):
         page = reader.pages[page_number]
         page_content = page.extract_text()
         #"summarize: "+page_content or page content for the nlkt version of summarize
-        textlist.append("summarize: "+page_content)
+        textlist.append(page_content)
         complete+=1
         window.progressBar.setValue(complete)
     window.progressBar.setValue(100)
     window.summarizeList = textlist
-    print('donezo')
+    print(window.summarizeList)
 
+def kill(window):
+    window.is_killed=True
+
+    # generate chunks of text \ sentences <= 1024 tokens
+def nest_sentences(document):
+  nested = []
+  sent = []
+  length = 0
+  for sentence in nltk.sent_tokenize(document):
+    length += len(sentence)
+    if length < 1024:
+      sent.append(sentence)
+    else:
+      nested.append(sent)
+      sent = []
+      length = 0
+
+  if sent:
+    nested.append(sent)
+  return nested
+
+def singletext(listEntry):
+    regex=re.compile('[^a-zA-Z]')
+    totalbiscuit=regex.sub('',listEntry)
+    tokens = sent_tokenize(totalbiscuit)
+    summarized = summarizer(tokens, min_length=75, max_length=125)
+    return summarized
 
 def summary(window):
-    #always in the function
-    text = window.summarizeList
-    
-    summarizer = pipeline("summarization", model="stevhliu/my_awesome_billsum_model")
+    textList=window.summarizeList
     percent = 0
-    for t in text:
-        summarizer(t)
-
-        tokenizer = AutoTokenizer.from_pretrained("stevhliu/my_awesome_billsum_model")
-        #inputs = tokenizer.batch_encode_plus(t, max_length=1024, return_tensors="pt", pad_to_max_length=True).input_ids  # Batch size 1
-
-        inputs = tokenizer(t, max_length=1024, return_tensors="pt", pad_to_max_length=True, truncation=True).input_ids
-
-        model = AutoModelForSeq2SeqLM.from_pretrained("stevhliu/my_awesome_billsum_model")
-        outputs = model.generate(inputs, max_new_tokens=1024, do_sample=False)
-
-        window.textBrowser.append(tokenizer.decode(outputs[0], skip_special_tokens=True))
+    for listEntry in textList:
+        output = singletext(listEntry)
+        print(output)
+        # window.textBrowser.append(''.join(output))
         percent+=1
         window.mlSummarizationStatusBar.setValue(percent)
-    
+
     window.mlSummarizationStatusBar.setValue(100)
-    print('donezo')
 
 
-#FUCKING PAINFUL
 
-    # text = window.summarizeList
-    # nltk.download('punkt')
-    # checkpoint = "google/pegasus-xsum"
-    # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    # model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
-    # sentonce=''.join(text)
-    # sentences = nltk.tokenize.sent_tokenize(sentonce)
-
-    # # initialize
-    # length = 0
-    # chunk = ""
-    # chunks = []
-    # count = -1
-    # percent = 0
-    # for sentence in text:
-    #     sentence = nltk.tokenize.sent_tokenize(sentence)
-    #     count += 1
-    #     combined_length = len(tokenizer.tokenize(sentence)) + length # add the no. of sentence tokens to the length counter
-
-    #     if combined_length  <= tokenizer.max_len_single_sentence: # if it doesn't exceed
-    #         chunk += sentence + " " # add the sentence to the chunk
-    #         length = combined_length # update the length counter
-
-    #         # if it is the last sentence
-    #         if count == len(sentences) - 1:
-    #             chunks.append(chunk) # save the chunk
-            
-    #     else: 
-    #         chunks.append(chunk) # save the chunk
-    #         # reset 
-    #         length = 0 
-    #         chunk = ""
-
-    #         # take care of the overflow sentence
-    #         chunk += sentence + " "
-    #         length = len(tokenizer.tokenize(sentence))
-
-    #     # inputs
-    #     inputs = [tokenizer(chunk, return_tensors="pt") for chunk in chunks]
-
-    #     # print summary
-    #     for input in inputs:
-    #         output = model.generate(**input)
-    #         window.textBrowser.append(tokenizer.decode(*output, skip_special_tokens=True))
-    #     percent+=1
-    #     window.mlSummarizationStatusBar.setValue(percent)
-
-    # window.mlSummarizationStatusBar.setValue(100)
-    # print('donezo')
+# def summary(window):
+#     text = window.summarizeList
+#     nested_sentences = nest_sentences(' '.join(text))
+#     #generate_summary(nested_sentences)
+#     summaries = []
+#     percent = 0
+#     for nested in nested_sentences:
+#       if(window.is_killed==True):
+#         break    
+#       input_tokenized = BartTokenizer.encode(self, text=' '.join(nested), truncation=True, return_tensors='pt')
+#       input_tokenized = input_tokenized.to(device)
+#       summary_ids = BartModel.to(device).generate(input_tokenized,
+#                                         length_penalty=3.0,
+#                                         min_length=30,
+#                                         max_length=100)
+#       output = [BartTokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in summary_ids]
+#       summaries.append(output)
+#       percent+=1
+#       window.mlSummarizationStatusBar.setValue(percent)
+#     summaries = [sentence for sublist in summaries for sentence in sublist]
+#     window.mlSummarizationStatusBar.setValue(100)
+#     print('donezo')
