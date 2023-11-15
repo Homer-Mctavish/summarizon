@@ -1,17 +1,9 @@
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5 import uic
-
 from base import context
-
 from logic import openFile, textExtract, summary, kill
-from PyQt5.QtWidgets import (
-    QWidget, QApplication, QProgressBar, QMainWindow,
-    QHBoxLayout, QPushButton
-)
-
-from PyQt5.QtCore import (
-    Qt, QObject, pyqtSignal, pyqtSlot, QRunnable, QThreadPool
-)
+from PyQt5.QtWidgets import (QWidget, QApplication, QProgressBar, QMainWindow,QHBoxLayout, QPushButton)
+from PyQt5.QtCore import (Qt, QObject, pyqtSignal, pyqtSlot, QRunnable, QThreadPool)
 import time
 
 class WorkerSignals(QObject):
@@ -57,17 +49,13 @@ class MainWindow(QMainWindow):
         self.is_killed = False
         super().__init__()
         # Loading the .ui file from the resources
-        #self.threadpool = Worker()
         self.ui = uic.loadUi(context.get_resource("summarizon.ui"), self)
 
         # Binding the button to the print_data function defined in logic.py
 
         self.getFileButton.clicked.connect(lambda: openFile(self))
-        #self.startSummarizing.clicked.connect(print_data())
         self.extractText.clicked.connect(lambda: textExtract(self))
         self.startSummarizing.clicked.connect(lambda: summary(self))
-        # self.pauseSummarizing.clicked.connect(lambda: Job.pause)
         self.stopSummarizing.clicked.connect(lambda: kill(self))
-        # self.resumeSummarizing.clicked.connect(lambda: Job.resume)
 
         

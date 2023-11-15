@@ -55,8 +55,10 @@ def nest_sentences(document):
   return nested
 
 def singletext(listEntry):
-    regex=re.compile('[^a-zA-Z]')
-    totalbiscuit=regex.sub('',listEntry)
+    #     regex=re.compile('[^a-zA-Z ]')
+    #     totalbiscuit=regex.sub('',listEntry)
+    whitelist=set('abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    totalbiscuit=''.join(filter(whitelist.__contains__, listEntry))
     tokens = sent_tokenize(totalbiscuit)
     summarized = summarizer(tokens, min_length=75, max_length=125)
     return summarized
@@ -66,8 +68,10 @@ def summary(window):
     percent = 0
     for listEntry in textList:
         output = singletext(listEntry)
-        print(output)
-        # window.textBrowser.append(''.join(output))
+        # value=output[0].keys().index("summary_text")
+        value=output[0]['summary_text']
+        print(value)
+        # window.textBrowser.append(''.join(value))
         percent+=1
         window.mlSummarizationStatusBar.setValue(percent)
 
@@ -75,25 +79,4 @@ def summary(window):
 
 
 
-# def summary(window):
-#     text = window.summarizeList
-#     nested_sentences = nest_sentences(' '.join(text))
-#     #generate_summary(nested_sentences)
-#     summaries = []
-#     percent = 0
-#     for nested in nested_sentences:
-#       if(window.is_killed==True):
-#         break    
-#       input_tokenized = BartTokenizer.encode(self, text=' '.join(nested), truncation=True, return_tensors='pt')
-#       input_tokenized = input_tokenized.to(device)
-#       summary_ids = BartModel.to(device).generate(input_tokenized,
-#                                         length_penalty=3.0,
-#                                         min_length=30,
-#                                         max_length=100)
-#       output = [BartTokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in summary_ids]
-#       summaries.append(output)
-#       percent+=1
-#       window.mlSummarizationStatusBar.setValue(percent)
-#     summaries = [sentence for sublist in summaries for sentence in sublist]
-#     window.mlSummarizationStatusBar.setValue(100)
-#     print('donezo')
+
